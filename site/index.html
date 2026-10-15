@@ -893,7 +893,7 @@ renderAll();
 setInterval(renderHeader, 60000);
 
 canWrite = false;
-const DATA_URL = "data.enc.json";
+const DATA_URL = "https://raw.githubusercontent.com/fad20-maker/osanyin-mission-cockpit/donnees/data.enc.json";
 const b64 = x => Uint8Array.from(atob(x), c => c.charCodeAt(0));
 let CODE = null, lastStamp = "";
 async function decrypt(pack, code){
@@ -902,7 +902,7 @@ async function decrypt(pack, code){
   const pt = await crypto.subtle.decrypt({name:"AES-GCM", iv:b64(pack.iv)}, key, b64(pack.ct));
   return JSON.parse(new TextDecoder().decode(pt));
 }
-async function fetchPack(){ const r = await fetch(DATA_URL + "?t=" + Date.now(), {cache:"no-store"}); if (!r.ok) throw new Error("http " + r.status); return r.json(); }
+async function fetchPack(){ const r = await fetch(DATA_URL + "?t=" + Math.floor(Date.now() / 60000), {cache:"no-store"}); if (!r.ok) throw new Error("http " + r.status); return r.json(); }
 function apply(d){
   S.tasks = d.tasks || []; S.points = d.points || []; S.meetings = d.meetings || []; S.journal = []; S.inbox = [];
   S.state = d.state || null; S.prog = d.programme || null; S.rep = d.reperes || null; S.bilan = d.bilan || null; S.refresh = null;
