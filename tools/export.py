@@ -7,7 +7,7 @@ Usage: python3 tools/export.py <snapshot_dir> <access_code> [site_dir]
 journal, inbox, meta), each holding <doc_id>.json files.
 Journal and inbox are never exported: they stay in the coordination console.
 """
-import base64, hashlib, json, os, sys, datetime
+import base64, hashlib, json, os, re, sys, datetime
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
@@ -35,6 +35,22 @@ def meta(snap, name):
     return json.load(open(p, encoding="utf-8")) if os.path.exists(p) else None
 
 
+TECH_ALERT = re.compile(
+    r"vitrine|web viewer|incompl|actualisation|refresh|google agenda|agenda google|google calendar|"
+    r"synchronis|github|dossier local|local folder|ordinateur|computer|code d'acc|access code",
+    re.IGNORECASE)
+
+
+def team_state(state):
+    """Technical alerts stay in the coordination console; the team only sees mission alerts."""
+    if not state:
+        return state
+    state = dict(state)
+    state["alerts"] = [a for a in (state.get("alerts") or [])
+                       if not a.get("tech") and not TECH_ALERT.search((a.get("text") or "") + " " + (a.get("en") or ""))]
+    return state
+
+
 def contributed(docs, key):
     for d in docs:
         if (d.get("author") or "").lower().startswith(key) and d.get("kind") in ("rapport", "cr") and (d.get("date") or "") >= "2026-10-16":
@@ -51,7 +67,7 @@ def main():
         "tasks": load(snap, "tasks"),
         "points": load(snap, "points"),
         "meetings": load(snap, "meetings"),
-        "state": meta(snap, "state"),
+        "state": team_state(meta(snap, "state")),
         "programme": meta(snap, "programme"),
         "reperes": meta(snap, "reperes"),
         "bilan": meta(snap, "bilan"),
