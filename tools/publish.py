@@ -21,7 +21,8 @@ MSG = sys.argv[1] if len(sys.argv) > 1 else "Mise à jour des données"
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 API = f"https://api.github.com/repos/{REPO}/contents/{PATH}"
 HDR = {"Authorization": f"Bearer {TOKEN}", "Accept": "application/vnd.github+json",
-       "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "coordination-osanyin"}
+       "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "coordination-osanyin",
+       "Content-Type": "application/json"}
 
 
 def call(method, url, body=None):
@@ -45,7 +46,11 @@ def main():
     try:
         res = call("PUT", API, body)
     except urllib.error.HTTPError as e:
-        sys.exit(f"publication refusée ({e.code})")
+        try:
+            detail = json.loads(e.read().decode()).get("message", "")
+        except Exception:
+            detail = ""
+        sys.exit(f"publication refusée ({e.code}) {detail}")
     print("publié", res["commit"]["sha"][:7])
 
 
